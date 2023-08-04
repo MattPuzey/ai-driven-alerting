@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 )
 
@@ -53,7 +53,7 @@ func OptimizeThresholdHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getRequestData(r *http.Request) (map[string]string, error) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return nil, err
 	}
