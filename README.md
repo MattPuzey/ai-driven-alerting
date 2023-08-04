@@ -180,7 +180,7 @@ monitoring data going to be upheld?
 ```
 
 Answer:
-```
+
 As of my last update in September 2021, OpenAI provided access to Chat GPT through their API, which required sending 
 data over the internet to OpenAI's servers for processing and generating responses. However, they also offered an option
 called "ChatGPT Plus" for subscribers, which allowed users to have priority access to the API while retaining the option
@@ -214,7 +214,7 @@ policies and assurances regarding data handling and privacy when using their API
 It's essential to keep track of OpenAI's updates and announcements to see if they provide any options for on-premise
 deployment of Chat GPT or any additional data privacy and security features in their offerings. Always refer to the most
 recent information from OpenAI for the latest options and capabilities.
-```
+
 
 Prompt: 
 ```
@@ -224,7 +224,7 @@ solution anyway) how would the Continuous Learning feature work without the accu
 ```
 
 Answer: 
-```
+
 If your organization decides to use ChatGPT Plus with the option to delete data for security purposes, it means that the
 data sent to the ChatGPT API will not be stored or accumulated by OpenAI. While this approach may help address certain 
 privacy concerns, it does have implications for the Continuous Learning feature.
@@ -246,7 +246,7 @@ When considering the use of ChatGPT or any AI model, it's essential to strike a 
 benefits gained from continuous learning and personalized recommendations. Organizations must carefully evaluate their
 specific security requirements and compliance obligations when using AI language models and make an informed decision based
 on their unique needs and constraints.
-```
+
 
 ### Considerations identified
 Prompt:
@@ -255,7 +255,7 @@ Given this trade-off, identify any contradictions in the current set of requirem
 ```
 
 Answer:
-```
+
 Upon reviewing the current set of requirements, there doesn't appear to be any direct contradictions. However, there are
 some potential trade-offs and challenges that may need further consideration:
 
@@ -285,4 +285,3 @@ requirements based on their specific needs, risk tolerance, and compliance oblig
 discussions and seeking legal advice to ensure that the chosen approach aligns with the organization's security and privacy
 goals while still providing a valuable and effective solution. Additionally, regular reviews and updates of the requirements
 may be necessary to adapt to changing circumstances and emerging best practices in the field of AI and data privacy.
-```
