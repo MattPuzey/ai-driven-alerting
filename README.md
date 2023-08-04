@@ -1,4 +1,16 @@
 # ai-driven-alerting 
+- [ai-driven-alerting](#ai-driven-alerting)
+    * [Introduction](#introduction)
+    * [Design](#design)
+    * [Requirements](#requirements)
+    * [Example:](#example-)
+        + [Prompt:](#prompt-)
+        + [Answer:](#answer-)
+    * [Known issues](#known-issues)
+        + [Discussion around requirement 7.](#discussion-around-requirement-7)
+        + [Considerations identified](#considerations-identified)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
 ## Introduction 
 Initial prompts: 
