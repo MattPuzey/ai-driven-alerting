@@ -53,13 +53,7 @@ func TestGetThresholdRecommendationFromChatGPT(t *testing.T) {
 }
 
 func TestOptimizeThresholdHandler(t *testing.T) {
-	reqBody := map[string]string{
-		"incident_details": "CPU spike incident",
-		"historical_data":  "Past incidents: ...",
-	}
-	reqBodyJSON, _ := json.Marshal(reqBody)
-
-	req, _ := http.NewRequest("POST", optimizeRoute, strings.NewReader(string(reqBodyJSON)))
+	req, _ := http.NewRequest("GET", optimizeRoute, nil)
 	w := httptest.NewRecorder()
 
 	OptimizeThresholdHandler(w, req)
@@ -97,24 +91,24 @@ func TestSendResponse(t *testing.T) {
 
 func TestGetRequestData(t *testing.T) {
 	reqBody := map[string]string{
-		"incident_details": "CPU spike incident",
-		"historical_data":  "Past incidents: ...",
+		"metric_key": "cpu_usage",
+		"value":      "80.5",
 	}
 	reqBodyJSON, _ := json.Marshal(reqBody)
 
-	req, _ := http.NewRequest("POST", optimizeRoute, strings.NewReader(string(reqBodyJSON)))
+	req, _ := http.NewRequest("POST", ingestMetricRoute, strings.NewReader(string(reqBodyJSON)))
 
 	data, err := getRequestData(req)
 	if err != nil {
 		t.Errorf("Error getting request data: %v", err)
 	}
 
-	if data["incident_details"] != "CPU spike incident" {
-		t.Errorf("Expected incident_details: %s, got: %s", "CPU spike incident", data["incident_details"])
+	if data["metric_key"] != "cpu_usage" {
+		t.Errorf("Expected metric_key: %s, got: %s", "cpu_usage", data["metric_key"])
 	}
 
-	if data["historical_data"] != "Past incidents: ..." {
-		t.Errorf("Expected historical_data: %s, got: %s", "Past incidents: ...", data["historical_data"])
+	if data["value"] != "80.5" {
+		t.Errorf("Expected value: %s, got: %s", "80.5", data["value"])
 	}
 }
 
@@ -147,7 +141,7 @@ func TestSendErrorResponse(t *testing.T) {
 }
 
 func TestSendSuccessResponse(t *testing.T) {
-	expectedData := map[string]string{"recommendation": "Adjust the threshold to 85%"}
+	expectedData := map[string]string{"message": "Success"}
 
 	w := httptest.NewRecorder()
 	sendSuccessResponse(w, expectedData)
@@ -159,7 +153,7 @@ func TestSendSuccessResponse(t *testing.T) {
 	var responseData map[string]string
 	json.Unmarshal(w.Body.Bytes(), &responseData)
 
-	if responseData["recommendation"] != expectedData["recommendation"] {
-		t.Errorf("Expected recommendation: %s\nGot: %s", expectedData["recommendation"], responseData["recommendation"])
+	if responseData["message"] != expectedData["message"] {
+		t.Errorf("Expected message: %s\nGot: %s", expectedData["message"], responseData["message"])
 	}
 }

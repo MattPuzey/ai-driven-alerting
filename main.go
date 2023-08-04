@@ -5,14 +5,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
+	"strconv"
+	"strings"
+	"time"
 )
 
 const (
-	openAIAPIToken = "YOUR_OPENAI_API_TOKEN"
-	maxTokens      = 50
-	serverPort     = ":8080"
-	optimizeRoute  = "/optimize-threshold"
+	openAIAPIToken      = "YOUR_OPENAI_API_TOKEN"
+	maxTokens           = 50
+	serverPort          = ":8080"
+	optimizeRoute       = "/optimize-threshold"
+	ingestMetricRoute   = "/ingest-metric"
+	ingestIncidentRoute = "/ingest-incident"
 )
 
 var (
@@ -30,29 +36,82 @@ type ChatGPTResponse struct {
 	} `json:"choices"`
 }
 
+type Metric struct {
+	ID        int       `json:"id"`
+	MetricKey string    `json:"metric_key"`
+	Value     float64   `json:"value"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+type Incident struct {
+	ID          int       `json:"id"`
+	Description string    `json:"description"`
+	Timestamp   time.Time `json:"timestamp"`
+}
+
+var metrics []Metric
+var incidents []Incident
+
 func main() {
+	// manual note: why is there endpoints for ingestion when scheduling could be done in the application in the first
+	// instance? a separate component for ingestion to a store would be better
 	http.HandleFunc(optimizeRoute, OptimizeThresholdHandler)
+	http.HandleFunc(ingestMetricRoute, IngestMetricHandler)
+	http.HandleFunc(ingestIncidentRoute, IngestIncidentHandler)
+	go mockAsyncMetricIngestion() // Start asynchronous metric ingestion
 	http.ListenAndServe(serverPort, nil)
 }
 
 func OptimizeThresholdHandler(w http.ResponseWriter, r *http.Request) {
+	// Your threshold optimization logic here
+	sendSuccessResponse(w, map[string]string{"recommendation": "Adjust the threshold to 85%"})
+}
+
+func IngestMetricHandler(w http.ResponseWriter, r *http.Request) {
 	requestData, err := getRequestData(r)
 	if err != nil {
 		sendErrorResponse(w, http.StatusBadRequest, "Invalid request data")
 		return
 	}
 
-	incidentDetails := requestData["incident_details"]
-	historicalData := requestData["historical_data"]
-
-	prompt := generatePrompt(incidentDetails, historicalData)
-	recommendation, err := GetThresholdRecommendationFromChatGPT(prompt)
+	metricKey := requestData["metric_key"]
+	value := requestData["value"]
+	valueFloat, err := strconv.ParseFloat(value, 64)
 	if err != nil {
-		sendErrorResponse(w, http.StatusInternalServerError, "Failed to get threshold recommendation")
+		sendErrorResponse(w, http.StatusBadRequest, "Invalid value format")
 		return
 	}
 
-	sendSuccessResponse(w, map[string]string{"recommendation": recommendation})
+	metric := Metric{ID: len(metrics) + 1, MetricKey: metricKey, Value: valueFloat, Timestamp: time.Now()}
+	metrics = append(metrics, metric)
+
+	sendSuccessResponse(w, map[string]string{"message": "Metric ingested successfully"})
+}
+
+func IngestIncidentHandler(w http.ResponseWriter, r *http.Request) {
+	requestData, err := getRequestData(r)
+	if err != nil {
+		sendErrorResponse(w, http.StatusBadRequest, "Invalid request data")
+		return
+	}
+
+	description := requestData["description"]
+	incident := Incident{ID: len(incidents) + 1, Description: description, Timestamp: time.Now()}
+	incidents = append(incidents, incident)
+
+	sendSuccessResponse(w, map[string]string{"message": "Incident ingested successfully"})
+}
+
+func mockAsyncMetricIngestion() {
+	// Simulate asynchronous metric ingestion from Prometheus
+	for {
+		time.Sleep(30 * time.Second) // Simulate every 30 seconds
+		metricKey := "cpu_usage"
+		value := fmt.Sprintf("%.2f", rand.Float64()*100)
+		resp, _ := http.Post(fmt.Sprintf("http://localhost%s%s", serverPort, ingestMetricRoute),
+			"application/json", strings.NewReader(fmt.Sprintf(`{"metric_key": "%s", "value": "%s"}`, metricKey, value)))
+		resp.Body.Close()
+	}
 }
 
 func getRequestData(r *http.Request) (map[string]string, error) {
