@@ -35,7 +35,7 @@ func main() {
 func OptimizeThresholdHandler(w http.ResponseWriter, r *http.Request) {
 	requestData, err := getRequestData(r)
 	if err != nil {
-		sendResponse(w, http.StatusBadRequest, map[string]string{"error": "Invalid request data"})
+		sendErrorResponse(w, http.StatusBadRequest, "Invalid request data")
 		return
 	}
 
@@ -45,11 +45,11 @@ func OptimizeThresholdHandler(w http.ResponseWriter, r *http.Request) {
 	prompt := generatePrompt(incidentDetails, historicalData)
 	recommendation, err := GetThresholdRecommendationFromChatGPT(prompt)
 	if err != nil {
-		sendResponse(w, http.StatusInternalServerError, map[string]string{"error": "ChatGPT API request failed"})
+		sendErrorResponse(w, http.StatusInternalServerError, "Failed to get threshold recommendation")
 		return
 	}
 
-	sendResponse(w, http.StatusOK, map[string]string{"recommendation": recommendation})
+	sendSuccessResponse(w, map[string]string{"recommendation": recommendation})
 }
 
 func getRequestData(r *http.Request) (map[string]string, error) {
@@ -98,8 +98,16 @@ func GetThresholdRecommendationFromChatGPT(prompt string) (string, error) {
 	return chatGPTResponse.Choices[0].Text, nil
 }
 
-func sendResponse(w http.ResponseWriter, status int, responseData interface{}) {
-	w.WriteHeader(status)
+func sendSuccessResponse(w http.ResponseWriter, responseData interface{}) {
+	sendResponse(w, http.StatusOK, responseData)
+}
+
+func sendErrorResponse(w http.ResponseWriter, statusCode int, errorMessage string) {
+	sendResponse(w, statusCode, map[string]string{"error": errorMessage})
+}
+
+func sendResponse(w http.ResponseWriter, statusCode int, responseData interface{}) {
+	w.WriteHeader(statusCode)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(responseData)
 }
