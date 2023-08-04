@@ -33,31 +33,46 @@ func main() {
 }
 
 func OptimizeThresholdHandler(w http.ResponseWriter, r *http.Request) {
-	requestData := getRequestData(r)
+	requestData, err := getRequestData(r)
+	if err != nil {
+		sendResponse(w, http.StatusBadRequest, map[string]string{"error": "Invalid request data"})
+		return
+	}
+
 	incidentDetails := requestData["incident_details"]
 	historicalData := requestData["historical_data"]
 
 	prompt := generatePrompt(incidentDetails, historicalData)
-	recommendation := GetThresholdRecommendationFromChatGPT(prompt)
+	recommendation, err := GetThresholdRecommendationFromChatGPT(prompt)
+	if err != nil {
+		sendResponse(w, http.StatusInternalServerError, map[string]string{"error": "ChatGPT API request failed"})
+		return
+	}
 
 	sendResponse(w, http.StatusOK, map[string]string{"recommendation": recommendation})
 }
 
-func getRequestData(r *http.Request) map[string]string {
-	body, _ := ioutil.ReadAll(r.Body)
+func getRequestData(r *http.Request) (map[string]string, error) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
 	defer r.Body.Close()
 
 	var requestData map[string]string
-	json.Unmarshal(body, &requestData)
+	err = json.Unmarshal(body, &requestData)
+	if err != nil {
+		return nil, err
+	}
 
-	return requestData
+	return requestData, nil
 }
 
 func generatePrompt(incidentDetails, historicalData string) string {
 	return fmt.Sprintf("Based on historical data, it seems that this incident is similar to past false alarms. To make the alert less sensitive, you can consider adjusting the alert threshold to a higher value like 85%%. This should help in reducing unnecessary alerts while still capturing genuine incidents. Please review and test this change before applying it in the production environment.\n\nIncident Details: %s\nHistorical Data: %s", incidentDetails, historicalData)
 }
 
-func GetThresholdRecommendationFromChatGPT(prompt string) string {
+func GetThresholdRecommendationFromChatGPT(prompt string) (string, error) {
 	reqBody, _ := json.Marshal(ChatGPTRequest{
 		Prompt:    prompt,
 		MaxTokens: maxTokens,
@@ -68,13 +83,19 @@ func GetThresholdRecommendationFromChatGPT(prompt string) string {
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", openAIAPIToken))
 
 	client := &http.Client{}
-	resp, _ := client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
 	defer resp.Body.Close()
 
 	var chatGPTResponse ChatGPTResponse
-	json.NewDecoder(resp.Body).Decode(&chatGPTResponse)
+	err = json.NewDecoder(resp.Body).Decode(&chatGPTResponse)
+	if err != nil {
+		return "", err
+	}
 
-	return chatGPTResponse.Choices[0].Text
+	return chatGPTResponse.Choices[0].Text, nil
 }
 
 func sendResponse(w http.ResponseWriter, status int, responseData interface{}) {
