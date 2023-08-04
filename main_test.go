@@ -11,7 +11,10 @@ import (
 func TestGeneratePrompt(t *testing.T) {
 	incidentDetails := "Incident: CPU spike"
 	historicalData := "Past incidents: ..."
-	expectedPrompt := "Based on historical data, it seems that this incident is similar to past false alarms. To make the alert less sensitive, you can consider adjusting the alert threshold to a higher value like 85%%. This should help in reducing unnecessary alerts while still capturing genuine incidents. Please review and test this change before applying it in the production environment.\n\nIncident Details: Incident: CPU spike\nHistorical Data: Past incidents: ..."
+	expectedPrompt := "Based on historical data, it seems that this incident is similar to past false alarms. To make " +
+		"the alert less sensitive, you can consider adjusting the alert threshold to a higher value like 85%%. This " +
+		"should help in reducing unnecessary alerts while still capturing genuine incidents. Please review and test " +
+		"this change before applying it in the production environment.\n\nIncident Details: Incident: CPU spike\nHistorical Data: Past incidents: ..."
 	actualPrompt := generatePrompt(incidentDetails, historicalData)
 
 	if actualPrompt != expectedPrompt {
