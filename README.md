@@ -104,7 +104,9 @@ Note: These were pulled out of the GPT 3.5 chat around the design rather than th
 based off of these requirements with Chat GPT 4 or otherwise drive the design requirements first, for example by having GPT 4 define a new set of requirements initially.   
 
 ## Example:
-The most interesting part initially was what the interface with chat GPT 
+The most interesting part initially was what the interface with chat GPT and how it would make recommendations based on 
+the historic metric data, how it would ingest large amounts of historic data without creating performance concerns etc. 
+because of this the first example and prototype chosen is based around this component.
 ### Prompt:
 ```
 Give me an example of 5. in the ChatGPT-based design, including Prometheus query examples  
