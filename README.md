@@ -8,8 +8,7 @@ adjusting Prometheus alert thresholds using generative AI to identify patterns, 
 The system could be integrated with Prometheus and PagerDuty as MVP data sources.
 ```
 ```
-Outline a design that would leverage Chat GPT 
-    
+Outline a design that would leverage Chat GPT
 ```
 
 ## Design 

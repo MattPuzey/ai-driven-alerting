@@ -9,11 +9,14 @@ import (
 )
 
 const (
-	chatGPTAPIURL  = "https://api.openai.com/v1/engines/davinci-codex/completions"
 	openAIAPIToken = "YOUR_OPENAI_API_TOKEN"
 	maxTokens      = 50
 	serverPort     = ":8080"
 	optimizeRoute  = "/optimize-threshold"
+)
+
+var (
+	chatGPTAPIURL = "https://api.openai.com/v1/engines/davinci-codex/completions"
 )
 
 type ChatGPTRequest struct {
