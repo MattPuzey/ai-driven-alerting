@@ -8,20 +8,6 @@ import (
 	"testing"
 )
 
-func TestGeneratePrompt(t *testing.T) {
-	incidentDetails := "Incident: CPU spike"
-	historicalData := "Past incidents: ..."
-	expectedPrompt := "Based on historical data, it seems that this incident is similar to past false alarms. To make " +
-		"the alert less sensitive, you can consider adjusting the alert threshold to a higher value like 85%%. This " +
-		"should help in reducing unnecessary alerts while still capturing genuine incidents. Please review and test " +
-		"this change before applying it in the production environment.\n\nIncident Details: Incident: CPU spike\nHistorical Data: Past incidents: ..."
-	actualPrompt := generatePrompt(incidentDetails, historicalData)
-
-	if actualPrompt != expectedPrompt {
-		t.Errorf("Expected prompt:\n%s\n\nGot:\n%s", expectedPrompt, actualPrompt)
-	}
-}
-
 func TestGetThresholdRecommendationFromChatGPT(t *testing.T) {
 	expectedRecommendation := "Try increasing the threshold to 85% to reduce false alarms."
 	mockResponse := ChatGPTResponse{

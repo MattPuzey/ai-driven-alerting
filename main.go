@@ -63,8 +63,17 @@ func main() {
 }
 
 func OptimizeThresholdHandler(w http.ResponseWriter, r *http.Request) {
-	// Your threshold optimization logic here
-	sendSuccessResponse(w, map[string]string{"recommendation": "Adjust the threshold to 85%"})
+	requestData, err := getRequestData(r)
+	if err != nil {
+		sendErrorResponse(w, http.StatusBadRequest, "Invalid request data")
+		return
+	}
+	prompt := requestData["prompt"]
+
+	recommendation, err := GetThresholdRecommendationFromChatGPT(prompt)
+	response := map[string]string{"recommendation": recommendation}
+
+	sendSuccessResponse(w, response)
 }
 
 func IngestMetricHandler(w http.ResponseWriter, r *http.Request) {
@@ -114,6 +123,16 @@ func mockAsyncMetricIngestion() {
 	}
 }
 
+func mockAsyncIncidentIngestion() {
+	// Simulate asynchronous incident ingestion from Prometheus
+	for {
+		time.Sleep(10 * time.Second) // Simulate every 10 seconds
+		description := "CPU spike incident"
+		incident := Incident{ID: len(incidents) + 1, Description: description, Timestamp: time.Now()}
+		incidents = append(incidents, incident)
+	}
+}
+
 func getRequestData(r *http.Request) (map[string]string, error) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -128,13 +147,6 @@ func getRequestData(r *http.Request) (map[string]string, error) {
 	}
 
 	return requestData, nil
-}
-
-func generatePrompt(incidentDetails, historicalData string) string {
-	return fmt.Sprintf("Based on historical data, it seems that this incident is similar to past false alarms. "+
-		"To make the alert less sensitive, you can consider adjusting the alert threshold to a higher value like 85%%. "+
-		"This should help in reducing unnecessary alerts while still capturing genuine incidents. Please review and test "+
-		"this change before applying it in the production environment.\n\nIncident Details: %s\nHistorical Data: %s", incidentDetails, historicalData)
 }
 
 func GetThresholdRecommendationFromChatGPT(prompt string) (string, error) {
