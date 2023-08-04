@@ -1,14 +1,13 @@
 # ai-driven-alerting 
-- [ai-driven-alerting](#ai-driven-alerting)
-    * [Introduction](#introduction)
-    * [Design](#design)
-    * [Requirements](#requirements)
-    * [Example:](#example-)
-        + [Prompt:](#prompt-)
-        + [Answer:](#answer-)
-    * [Known issues](#known-issues)
-        + [Discussion around requirement 7.](#discussion-around-requirement-7)
-        + [Considerations identified](#considerations-identified)
+* [Introduction](#introduction)
+* [Design](#design)
+* [Requirements](#requirements)
+* [Example:](#example-)
+    + [Prompt:](#prompt-)
+    + [Answer:](#answer-)
+* [Known issues](#known-issues)
+    + [Discussion around requirement 7.](#discussion-around-requirement-7)
+    + [Considerations identified](#considerations-identified)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
@@ -115,7 +114,7 @@ receive incident alerts and metrics data for analysis and resolution guidance.
 Note: These were pulled out of the GPT 3.5 chat around the design rather than the reverse. Consider refreshing the design
 based off of these requirements with Chat GPT 4 or otherwise drive the design requirements first, for example by having GPT 4 define a new set of requirements initially.   
 
-## Example:
+## Continuous Learning Example:
 The most interesting part initially was what the interface with chat GPT and how it would make recommendations based on 
 the historic metric data, how it would ingest large amounts of historic data without creating performance concerns etc. 
 because of this the first example and prototype chosen is based around this component.
