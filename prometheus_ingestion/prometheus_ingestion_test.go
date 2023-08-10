@@ -1,4 +1,4 @@
-package main
+package prometheus_ingestion
 
 import (
 	"net/http"
