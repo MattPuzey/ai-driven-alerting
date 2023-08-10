@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -58,9 +57,13 @@ var incidents []Incident
 
 func main() {
 	http.HandleFunc(optimizeRoute, OptimizeThresholdHandler)
+	// TODO: manual note to remove these endpoints as they do not make sense, data ingestion should be done out of band
+	// of request processing...
 	http.HandleFunc(ingestMetricRoute, IngestMetricHandler)
 	http.HandleFunc(ingestIncidentRoute, IngestIncidentHandler)
-	http.ListenAndServe(serverPort, nil)
+	go mockAsyncIncidentIngestion()
+	go mockAsyncMetricIngestion()
+	go http.ListenAndServe(serverPort, nil)
 }
 
 func getPrometheusMetricValue(metricKey string) string {
@@ -73,7 +76,7 @@ func getPrometheusMetricValue(metricKey string) string {
 	}
 	defer resp.Body.Close()
 
-	_, _ := ioutil.ReadAll(resp.Body)
+	//body, _ := io.ReadAll(resp.Body)
 	// Parse and extract metric value from Prometheus response
 	// This step depends on the Prometheus query response format
 
