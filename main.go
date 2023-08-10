@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math/rand"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,12 +13,16 @@ import (
 )
 
 const (
-	openAIAPIToken      = "YOUR_OPENAI_API_TOKEN"
-	maxTokens           = 50
-	serverPort          = ":8080"
-	optimizeRoute       = "/optimize-threshold"
-	ingestMetricRoute   = "/ingest-metric"
-	ingestIncidentRoute = "/ingest-incident"
+	openAIAPIToken        = "YOUR_OPENAI_API_TOKEN"
+	maxTokens             = 50
+	serverPort            = ":8080"
+	optimizeRoute         = "/optimize-threshold"
+	ingestIncidentRoute   = "/ingest-incident"
+	pagerDutyAPIKey       = "YOUR_PAGERDUTY_API_KEY"
+	pagerDutyIncidentsURL = "https://api.pagerduty.com/incidents"
+	ingestMetricRoute     = "/ingest-metric"
+	prometheusBaseURL     = "http://prometheus-server:9090" // Replace with your Prometheus server URL
+	prometheusQueryPath   = "/api/v1/query"
 )
 
 var (
@@ -53,27 +57,27 @@ var metrics []Metric
 var incidents []Incident
 
 func main() {
-	// manual note: why is there endpoints for ingestion when scheduling could be done in the application in the first
-	// instance? a separate component for ingestion to a store would be better
 	http.HandleFunc(optimizeRoute, OptimizeThresholdHandler)
 	http.HandleFunc(ingestMetricRoute, IngestMetricHandler)
 	http.HandleFunc(ingestIncidentRoute, IngestIncidentHandler)
-	go mockAsyncMetricIngestion() // Start asynchronous metric ingestion
 	http.ListenAndServe(serverPort, nil)
 }
 
-func OptimizeThresholdHandler(w http.ResponseWriter, r *http.Request) {
-	requestData, err := getRequestData(r)
+func getPrometheusMetricValue(metricKey string) string {
+	// Replace with actual Prometheus query logic
+	query := fmt.Sprintf(`sum(%s)`, metricKey)
+	resp, err := http.Get(fmt.Sprintf("%s%s?query=%s", prometheusBaseURL, prometheusQueryPath, query))
 	if err != nil {
-		sendErrorResponse(w, http.StatusBadRequest, "Invalid request data")
-		return
+		fmt.Printf("Error querying Prometheus: %v\n", err)
+		return ""
 	}
-	prompt := requestData["prompt"]
+	defer resp.Body.Close()
 
-	recommendation, err := GetThresholdRecommendationFromChatGPT(prompt)
-	response := map[string]string{"recommendation": recommendation}
+	_, _ := ioutil.ReadAll(resp.Body)
+	// Parse and extract metric value from Prometheus response
+	// This step depends on the Prometheus query response format
 
-	sendSuccessResponse(w, response)
+	return "123.45" // Replace with actual extracted metric value
 }
 
 func IngestMetricHandler(w http.ResponseWriter, r *http.Request) {
@@ -97,6 +101,60 @@ func IngestMetricHandler(w http.ResponseWriter, r *http.Request) {
 	sendSuccessResponse(w, map[string]string{"message": "Metric ingested successfully"})
 }
 
+func IngestPagerDutyIncident(incidentDescription string) error {
+	payload := map[string]interface{}{
+		"type":        "incident",
+		"title":       incidentDescription,
+		"description": "This is a generated incident description.",
+		"service": map[string]string{
+			"id":   "YOUR_PAGERDUTY_SERVICE_ID",
+			"type": "service_reference",
+		},
+	}
+
+	payloadBytes, _ := json.Marshal(payload)
+	req, _ := http.NewRequest("POST", pagerDutyIncidentsURL, bytes.NewBuffer(payloadBytes))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Token token=%s", pagerDutyAPIKey))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+//func IngestMetricToChatGPT(metric Metric) {
+//	// Generate a prompt using metric information and call Chat GPT
+//	prompt := fmt.Sprintf("Based on historical data, it seems that the current metric value for '%s' is high. This could indicate a potential issue. To make the alert more sensitive, you can consider adjusting the alert threshold to a lower value. This should help in capturing such incidents early. Please review and test this change before applying it in the production environment.\n\nMetric Details:\nMetric Key: %s\nMetric Value: %.2f", metric.MetricKey, metric.MetricKey, metric.Value)
+//
+//	// Call Chat GPT for recommendations
+//	recommendation, err := GetThresholdRecommendationFromChatGPT(prompt)
+//	if err != nil {
+//		fmt.Printf("Error generating recommendation: %v\n", err)
+//		return
+//	}
+//
+//	fmt.Printf("Recommendation: %s\n", recommendation)
+//}
+
+func OptimizeThresholdHandler(w http.ResponseWriter, r *http.Request) {
+	requestData, err := getRequestData(r)
+	if err != nil {
+		sendErrorResponse(w, http.StatusBadRequest, "Invalid request data")
+		return
+	}
+	prompt := requestData["prompt"]
+
+	recommendation, err := GetThresholdRecommendationFromChatGPT(prompt)
+	response := map[string]string{"recommendation": recommendation}
+
+	sendSuccessResponse(w, response)
+}
+
 func IngestIncidentHandler(w http.ResponseWriter, r *http.Request) {
 	requestData, err := getRequestData(r)
 	if err != nil {
@@ -115,10 +173,11 @@ func mockAsyncMetricIngestion() {
 	// Simulate asynchronous metric ingestion from Prometheus
 	for {
 		time.Sleep(30 * time.Second) // Simulate every 30 seconds
+
+		// Replace with actual Prometheus query and metric extraction logic
 		metricKey := "cpu_usage"
-		value := fmt.Sprintf("%.2f", rand.Float64()*100)
-		resp, _ := http.Post(fmt.Sprintf("http://localhost%s%s", serverPort, ingestMetricRoute),
-			"application/json", strings.NewReader(fmt.Sprintf(`{"metric_key": "%s", "value": "%s"}`, metricKey, value)))
+		value := getPrometheusMetricValue(metricKey)
+		resp, _ := http.Post(fmt.Sprintf("http://localhost%s%s", serverPort, ingestMetricRoute), "application/json", strings.NewReader(fmt.Sprintf(`{"metric_key": "%s", "value": "%s"}`, metricKey, value)))
 		resp.Body.Close()
 	}
 }
