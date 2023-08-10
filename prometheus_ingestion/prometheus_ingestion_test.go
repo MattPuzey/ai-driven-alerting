@@ -1,4 +1,4 @@
-package prometheus_ingestion
+package main
 
 import (
 	"net/http"
@@ -6,7 +6,6 @@ import (
 	"testing"
 )
 
-// Test the getMetrics function
 func TestGetMetrics(t *testing.T) {
 	tests := []struct {
 		mockResponse string
@@ -15,6 +14,7 @@ func TestGetMetrics(t *testing.T) {
 	}{
 		{`{"status": "success", "data": {"resultType": "vector", "result": [{"metric": {}, "value": [1628919140, "1"]}]}}`, http.StatusOK, false},
 		//{`{"status": "failure", "data": {"error": "Bad request"}}`, http.StatusBadRequest, true},
+		{``, http.StatusInternalServerError, true}, // Test with an empty response
 	}
 
 	for _, test := range tests {
@@ -23,11 +23,8 @@ func TestGetMetrics(t *testing.T) {
 			w.Write([]byte(test.mockResponse))
 		}))
 
-		// Override the Prometheus URL with our mock server address
-		prometheusURL = mockServer.URL
-		defer mockServer.Close()
-
-		data, err := getMetrics("up")
+		mf := NewMetricFetcher(http.DefaultClient, mockServer.URL)
+		data, err := mf.getMetrics("up")
 
 		if test.expectedErr && err == nil {
 			t.Errorf("Expected error, got nil")
@@ -36,5 +33,7 @@ func TestGetMetrics(t *testing.T) {
 		} else if !test.expectedErr && len(data.Data.Result) == 0 {
 			t.Errorf("Expected data, got none")
 		}
+
+		mockServer.Close()
 	}
 }

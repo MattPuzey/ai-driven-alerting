@@ -1,16 +1,30 @@
-package prometheus_ingestion
+package main
 
 import (
 	"encoding/json"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
 
-var (
-	prometheusURL = "http://YOUR_PROMETHEUS_SERVER:9090/api/v1/"
+const (
+	defaultPrometheusURL = "http://YOUR_PROMETHEUS_SERVER:9090/api/v1/"
 )
+
+// MetricFetcher fetches metrics from a Prometheus server
+type MetricFetcher struct {
+	client *http.Client
+	url    string
+}
+
+// NewMetricFetcher creates a new MetricFetcher
+func NewMetricFetcher(client *http.Client, url string) *MetricFetcher {
+	if url == "" {
+		url = defaultPrometheusURL
+	}
+	return &MetricFetcher{client: client, url: url}
+}
 
 // MetricData represents the structure of Prometheus response for a query
 type MetricData struct {
@@ -26,8 +40,9 @@ type MetricData struct {
 
 func main() {
 	// Sample: Collect data for a specific query. Adjust this as per your needs.
+	mf := NewMetricFetcher(http.DefaultClient, "")
 	query := "up"
-	data, err := getMetrics(query)
+	data, err := mf.getMetrics(query)
 	if err != nil {
 		log.Fatalf("Error fetching metrics: %v", err)
 	}
@@ -38,14 +53,14 @@ func main() {
 }
 
 // getMetrics retrieves metric data from Prometheus for the given query
-func getMetrics(query string) (*MetricData, error) {
-	resp, err := http.Get(prometheusURL + "?query=" + query)
+func (mf *MetricFetcher) getMetrics(query string) (*MetricData, error) {
+	resp, err := mf.client.Get(mf.url + "?query=" + query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch metrics: %v", err)
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %v", err)
 	}
