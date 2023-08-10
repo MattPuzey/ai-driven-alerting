@@ -3,12 +3,12 @@ package prometheus_ingestion
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 )
 
-const (
+var (
 	prometheusURL = "http://YOUR_PROMETHEUS_SERVER:9090/api/v1/"
 )
 
@@ -39,13 +39,13 @@ func main() {
 
 // getMetrics retrieves metric data from Prometheus for the given query
 func getMetrics(query string) (*MetricData, error) {
-	resp, err := http.Get(prometheusURL + "query?query=" + query)
+	resp, err := http.Get(prometheusURL + "?query=" + query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch metrics: %v", err)
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %v", err)
 	}
